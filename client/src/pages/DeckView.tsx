@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { cards as cardsApi, decks as decksApi } from "../api/client";
 import { ApiError } from "../api/client";
@@ -19,14 +19,16 @@ export default function DeckView() {
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [activeVoiceField, setActiveVoiceField] = useState<"front" | "back" | null>(null);
+  const activeVoiceFieldRef = useRef<"front" | "back" | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
   const { status: voiceStatus, start: startVoice, stop: stopVoice, isSupported } =
     useVoiceInput({
       onTranscript: (text) => {
-        if (activeVoiceField === "front") setFront((p) => (p ? p + " " + text : text));
-        else if (activeVoiceField === "back") setBack((p) => (p ? p + " " + text : text));
+        if (activeVoiceFieldRef.current === "front") setFront((p) => (p ? p + " " + text : text));
+        else if (activeVoiceFieldRef.current === "back") setBack((p) => (p ? p + " " + text : text));
+        activeVoiceFieldRef.current = null;
         setActiveVoiceField(null);
       },
     });
@@ -44,9 +46,11 @@ export default function DeckView() {
   function handleVoice(field: "front" | "back") {
     if (voiceStatus === "listening") {
       stopVoice();
+      activeVoiceFieldRef.current = null;
       setActiveVoiceField(null);
       return;
     }
+    activeVoiceFieldRef.current = field;
     setActiveVoiceField(field);
     startVoice();
   }
