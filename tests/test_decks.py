@@ -8,7 +8,9 @@ from tests.conftest import auth_headers, create_deck, create_user
 
 def test_create_deck(client: TestClient, session: Session):
     create_user(session)
-    resp = client.post("/decks/", json={"name": "Spanish"}, headers=auth_headers(client))
+    resp = client.post(
+        "/decks/", json={"name": "Spanish"}, headers=auth_headers(client)
+    )
     assert resp.status_code == 201
     assert resp.json()["name"] == "Spanish"
 
@@ -57,7 +59,9 @@ def test_get_deck_wrong_owner(client: TestClient, session: Session):
 def test_update_deck(client: TestClient, session: Session):
     user = create_user(session)
     deck = create_deck(session, owner_id=user.id)
-    resp = client.patch(f"/decks/{deck.id}", json={"name": "Updated"}, headers=auth_headers(client))
+    resp = client.patch(
+        f"/decks/{deck.id}", json={"name": "Updated"}, headers=auth_headers(client)
+    )
     assert resp.status_code == 200
     assert resp.json()["name"] == "Updated"
 
@@ -67,4 +71,6 @@ def test_delete_deck(client: TestClient, session: Session):
     deck = create_deck(session, owner_id=user.id)
     resp = client.delete(f"/decks/{deck.id}", headers=auth_headers(client))
     assert resp.status_code == 204
-    assert client.get(f"/decks/{deck.id}", headers=auth_headers(client)).status_code == 404
+    assert (
+        client.get(f"/decks/{deck.id}", headers=auth_headers(client)).status_code == 404
+    )

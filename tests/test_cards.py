@@ -61,9 +61,16 @@ def test_delete_card(client: TestClient, session: Session):
     deck = create_deck(session, owner_id=user.id)
     card = create_card(session, deck_id=deck.id)
 
-    resp = client.delete(f"/decks/{deck.id}/cards/{card.id}", headers=auth_headers(client))
+    resp = client.delete(
+        f"/decks/{deck.id}/cards/{card.id}", headers=auth_headers(client)
+    )
     assert resp.status_code == 204
-    assert client.get(f"/decks/{deck.id}/cards/{card.id}", headers=auth_headers(client)).status_code == 404
+    assert (
+        client.get(
+            f"/decks/{deck.id}/cards/{card.id}", headers=auth_headers(client)
+        ).status_code
+        == 404
+    )
 
 
 def test_card_belongs_to_deck(client: TestClient, session: Session):
@@ -73,5 +80,7 @@ def test_card_belongs_to_deck(client: TestClient, session: Session):
     card = create_card(session, deck_id=deck1.id)
 
     # Card from deck1 is not accessible via deck2's URL
-    resp = client.get(f"/decks/{deck2.id}/cards/{card.id}", headers=auth_headers(client))
+    resp = client.get(
+        f"/decks/{deck2.id}/cards/{card.id}", headers=auth_headers(client)
+    )
     assert resp.status_code == 404

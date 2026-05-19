@@ -51,6 +51,7 @@ def client_fixture(session: Session):
 
 # --- DB helpers ---
 
+
 def create_user(
     session: Session,
     email: str = "user@test.com",
@@ -64,12 +65,16 @@ def create_user(
     return user
 
 
-def get_token(client: TestClient, email: str = "user@test.com", password: str = "secret") -> str:
+def get_token(
+    client: TestClient, email: str = "user@test.com", password: str = "secret"
+) -> str:
     resp = client.post("/auth/login", data={"username": email, "password": password})
     return resp.json()["access_token"]
 
 
-def auth_headers(client: TestClient, email: str = "user@test.com", password: str = "secret") -> dict:
+def auth_headers(
+    client: TestClient, email: str = "user@test.com", password: str = "secret"
+) -> dict:
     return {"Authorization": f"Bearer {get_token(client, email, password)}"}
 
 

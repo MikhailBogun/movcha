@@ -7,10 +7,11 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.models import Flashcard
-from app.sm2 import MASTERED_INTERVAL_DAYS, apply_sm2
+from app.services.sm2 import MASTERED_INTERVAL_DAYS, apply_sm2
 from tests.conftest import auth_headers, create_card, create_deck, create_user
 
 # --- SM-2 unit tests (no DB needed) ---
+
 
 def _fresh_card() -> Flashcard:
     return Flashcard(
@@ -85,6 +86,7 @@ def test_sm2_all_ratings_valid(rating):
 
 # --- API integration tests ---
 
+
 def test_get_next_card_due(client: TestClient, session: Session):
     user = create_user(session)
     deck = create_deck(session, owner_id=user.id)
@@ -99,6 +101,7 @@ def test_get_next_card_none_due(client: TestClient, session: Session):
     deck = create_deck(session, owner_id=user.id)
     # Card due far in the future, interval not yet mastered
     from app.models import Flashcard as FC
+
     card = FC(
         deck_id=deck.id,
         front_text="Q",

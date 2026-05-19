@@ -52,6 +52,10 @@ def test_cannot_access_other_users_session(client: TestClient, session: Session)
     create_user(session, email="u1@test.com")
     create_user(session, email="u2@test.com")
 
-    session_id = client.post("/sessions/start", headers=auth_headers(client, "u1@test.com")).json()["id"]
-    resp = client.post(f"/sessions/{session_id}/end", headers=auth_headers(client, "u2@test.com"))
+    session_id = client.post(
+        "/sessions/start", headers=auth_headers(client, "u1@test.com")
+    ).json()["id"]
+    resp = client.post(
+        f"/sessions/{session_id}/end", headers=auth_headers(client, "u2@test.com")
+    )
     assert resp.status_code == 404
