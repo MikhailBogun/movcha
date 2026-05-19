@@ -27,5 +27,17 @@ services:
       - DATABASE_URL=mysql+pymysql://root:password@db/flashcards_db
       - SECRET_KEY=dev-secret-key-change-in-production
 
+  client:
+    build: ./client
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - api
+    environment:
+      - VITE_API_URL=http://localhost:8000
+
 volumes:
   mysql_data:

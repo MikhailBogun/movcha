@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 
 # --- Auth ---
 
@@ -10,6 +10,15 @@ from pydantic import BaseModel, EmailStr
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+
+    @field_validator("password")
+    @classmethod
+    def password_length(cls, v: str) -> str:
+        if len(v.encode()) > 72:
+            raise ValueError("Password must be 72 characters or fewer")
+        if len(v) < 6:
+            raise ValueError("Password must be at least 6 characters")
+        return v
 
 
 class UserResponse(BaseModel):

@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 
+from app.auth import get_current_user
 from app.database import get_session
+from app.models import User
 from app.schemas import Token, UserCreate, UserResponse
 from app.services import user as user_service
 
@@ -24,3 +26,8 @@ def login(
 ):
     token = user_service.authenticate_user(form.username, form.password, session)
     return Token(access_token=token)
+
+
+@router.get("/me", response_model=UserResponse)
+def me(current_user: User = Depends(get_current_user)):
+    return current_user
