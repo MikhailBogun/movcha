@@ -1,0 +1,39 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/routers/__init__.py", "app/__init__.py"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear (common bugs)
+    "UP", # pyupgrade (modernise syntax)
+]
+ignore = [
+    "E501", # line too long — formatter handles this
+    "B008", # Depends() in function defaults is the FastAPI pattern
+    "UP017", # prefer timezone.utc over UTC alias for Python 3.8 compat
+]
+
+[tool.ruff.lint.per-file-ignores]
+# SQLAlchemy evaluates relationship annotations at runtime — keep Optional/List
+# for Python 3.8 compatibility and correct relationship resolution.
+"app/models.py" = ["UP006", "UP007", "UP035"]
+# response_model= is a runtime expression — List[X] needed for Python < 3.9.
+"app/routers/*.py" = ["UP006", "UP035"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.format]
+quote-style = "double"
