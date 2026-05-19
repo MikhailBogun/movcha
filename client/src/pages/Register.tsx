@@ -40,10 +40,11 @@ export default function Register() {
           <h2 className="text-xl font-semibold mb-6">Create account</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
               <input
+                id="email"
                 type="email"
                 autoComplete="email"
                 required
@@ -53,10 +54,11 @@ export default function Register() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
               <input
+                id="password"
                 type="password"
                 autoComplete="new-password"
                 required
@@ -67,10 +69,11 @@ export default function Register() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="confirm" className="block text-sm font-medium text-gray-700 mb-1">
                 Confirm password
               </label>
               <input
+                id="confirm"
                 type="password"
                 autoComplete="new-password"
                 required
