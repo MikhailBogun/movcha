@@ -5,10 +5,10 @@ import { ApiError } from "../api/client";
 import type { Flashcard, UserSession } from "../api/types";
 
 const RATINGS = [
-  { value: 0, label: "Blackout", color: "bg-red-100 text-red-700 hover:bg-red-200" },
-  { value: 2, label: "Hard", color: "bg-orange-100 text-orange-700 hover:bg-orange-200" },
-  { value: 3, label: "Good", color: "bg-yellow-100 text-yellow-700 hover:bg-yellow-200" },
-  { value: 5, label: "Easy", color: "bg-green-100 text-green-700 hover:bg-green-200" },
+  { value: 0, label: "Blackout", sub: "No memory", bg: "bg-red-50 hover:bg-red-100 border-red-200 text-red-700" },
+  { value: 2, label: "Hard",     sub: "With effort", bg: "bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-700" },
+  { value: 3, label: "Good",     sub: "Some hesitation", bg: "bg-yellow-50 hover:bg-yellow-100 border-yellow-200 text-yellow-700" },
+  { value: 5, label: "Easy",     sub: "Perfect recall", bg: "bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700" },
 ];
 
 export default function ReviewSession() {
@@ -30,22 +30,14 @@ export default function ReviewSession() {
       const next = await reviewApi.next(deckId);
       setCard(next);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 404) {
-        setDone(true);
-      } else {
-        setError(err instanceof ApiError ? err.message : "Failed to fetch card");
-      }
+      if (err instanceof ApiError && err.status === 404) setDone(true);
+      else setError(err instanceof ApiError ? err.message : "Failed to fetch card");
     }
   }, [deckId]);
 
   useEffect(() => {
-    sessionsApi
-      .start()
-      .then(setSession)
-      .catch(() => null);
-
+    sessionsApi.start().then(setSession).catch(() => null);
     fetchNext();
-
     return () => {
       setSession((s) => {
         if (s) sessionsApi.end(s.id).catch(() => null);
@@ -54,13 +46,10 @@ export default function ReviewSession() {
     };
   }, [fetchNext]);
 
-  // Ping session every 30 s
   useEffect(() => {
     if (!session) return;
-    const interval = setInterval(() => {
-      sessionsApi.ping(session.id).catch(() => null);
-    }, 30_000);
-    return () => clearInterval(interval);
+    const t = setInterval(() => sessionsApi.ping(session.id).catch(() => null), 30_000);
+    return () => clearInterval(t);
   }, [session]);
 
   async function handleRate(rating: number) {
@@ -78,14 +67,13 @@ export default function ReviewSession() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-6 px-4">
-        <div className="text-5xl">🎉</div>
-        <h2 className="text-2xl font-bold text-gray-800">All caught up!</h2>
-        <p className="text-gray-500 text-center">No more cards due for review in this deck.</p>
-        <button
-          onClick={() => navigate(`/decks/${deckId}`)}
-          className="bg-primary-600 hover:bg-primary-700 text-white font-medium px-6 py-2.5 rounded-xl transition-colors"
-        >
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-5 px-4">
+        <div className="text-6xl">🎉</div>
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-slate-800">All caught up!</h2>
+          <p className="text-slate-500 mt-1">No more cards due for review.</p>
+        </div>
+        <button onClick={() => navigate(`/decks/${deckId}`)} className="btn-primary">
           Back to deck
         </button>
       </div>
@@ -94,9 +82,9 @@ export default function ReviewSession() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 px-4">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4 px-4">
         <p className="text-red-500">{error}</p>
-        <button onClick={() => navigate(`/decks/${deckId}`)} className="text-primary-600 hover:underline">
+        <button onClick={() => navigate(`/decks/${deckId}`)} className="btn-secondary">
           Back to deck
         </button>
       </div>
@@ -105,58 +93,73 @@ export default function ReviewSession() {
 
   if (!card) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-400">
-        Loading…
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-slate-400">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
+          <span className="text-sm">Loading…</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
-        <button
-          onClick={() => navigate(`/decks/${deckId}`)}
-          className="text-gray-400 hover:text-gray-600 text-lg"
-        >
-          ←
-        </button>
-        <span className="font-medium text-gray-700">Review session</span>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
+          <button
+            onClick={() => navigate(`/decks/${deckId}`)}
+            className="text-slate-400 hover:text-slate-600 transition-colors p-1 -ml-1 rounded-lg hover:bg-slate-100"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <span className="font-semibold text-slate-700">Review</span>
+        </div>
       </header>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-4 gap-6">
-        {/* Card */}
-        <div className="w-full max-w-lg">
+      {/* Card area */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        <div className="w-full max-w-lg space-y-4">
+
           {/* Front */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center min-h-[140px] flex items-center justify-center">
-            <p className="text-xl font-semibold text-gray-900">{card.front_text}</p>
+          <div className="card p-10 text-center">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-widest mb-4">Front</p>
+            <p className="text-2xl font-semibold text-slate-900 leading-snug">{card.front_text}</p>
           </div>
 
-          {/* Back / reveal */}
           {!revealed ? (
             <button
               onClick={() => setRevealed(true)}
-              className="w-full mt-3 bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 rounded-xl transition-colors"
+              className="btn-primary w-full py-3 text-base"
             >
               Show answer
             </button>
           ) : (
             <>
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 text-center mt-3 min-h-[100px] flex items-center justify-center">
-                <p className="text-gray-700 text-lg">{card.back_text}</p>
+              {/* Back */}
+              <div className="card p-8 text-center border-primary-100 bg-primary-50/30">
+                <p className="text-xs font-medium text-primary-400 uppercase tracking-widest mb-4">Answer</p>
+                <p className="text-xl text-slate-800 leading-snug">{card.back_text}</p>
               </div>
 
-              <p className="text-center text-sm text-gray-400 mt-4 mb-2">How well did you recall?</p>
-              <div className="grid grid-cols-4 gap-2">
-                {RATINGS.map((r) => (
-                  <button
-                    key={r.value}
-                    onClick={() => handleRate(r.value)}
-                    disabled={submitting}
-                    className={`rounded-xl py-2.5 text-sm font-medium transition-colors disabled:opacity-50 ${r.color}`}
-                  >
-                    {r.label}
-                  </button>
-                ))}
+              {/* Rating */}
+              <div>
+                <p className="text-center text-sm text-slate-400 mb-3">How well did you recall?</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {RATINGS.map((r) => (
+                    <button
+                      key={r.value}
+                      onClick={() => handleRate(r.value)}
+                      disabled={submitting}
+                      className={`rounded-xl border py-3 text-sm font-semibold transition-colors disabled:opacity-40 ${r.bg}`}
+                    >
+                      <span className="block">{r.label}</span>
+                      <span className="block text-xs font-normal opacity-70 mt-0.5">{r.sub}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </>
           )}

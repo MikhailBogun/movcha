@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { cards as cardsApi, decks as decksApi } from "../api/client";
 import { ApiError } from "../api/client";
 import type { Deck, Flashcard } from "../api/types";
+import AppShell from "../components/AppShell";
 import DictionaryPanel from "../components/DictionaryPanel";
 import { useDictionary } from "../hooks/useDictionary";
 import { useVoiceInput } from "../hooks/useVoiceInput";
@@ -131,31 +132,34 @@ export default function DeckView() {
     setCardList((prev) => prev.filter((c) => c.id !== cardId));
   }
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-400">Loading…</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
+    </div>
+  );
   if (error) return <div className="flex items-center justify-center min-h-screen text-red-500">{error}</div>;
 
   const canSubmit = pairs.some((p) => p.front.trim() && p.back.trim());
+  const validCount = pairs.filter((p) => p.front.trim() && p.back.trim()).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate("/")} className="text-gray-400 hover:text-gray-600 text-lg">←</button>
-        <div className="flex-1 min-w-0">
-          <h1 className="font-bold text-gray-900 truncate">{deck?.name}</h1>
-          {deck?.description && <p className="text-xs text-gray-400 truncate">{deck.description}</p>}
-        </div>
-        <Link
-          to={`/decks/${deckId}/review`}
-          className="bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-        >
+    <AppShell
+      back="/"
+      actions={
+        <Link to={`/decks/${deckId}/review`} className="btn-primary">
           Study
         </Link>
-      </header>
+      }
+    >
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900">{deck?.name}</h1>
+        {deck?.description && <p className="text-sm text-slate-400 mt-0.5">{deck.description}</p>}
+      </div>
 
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <div className="space-y-6">
         {/* Add cards form */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-800 mb-4">Add cards</h2>
+        <div className="card p-5">
+          <h2 className="font-semibold text-slate-800 mb-4">Add cards</h2>
           <form onSubmit={handleAddCards} className="space-y-4">
             {pairs.map((pair, idx) => (
               <div key={pair.id} className="space-y-2">
@@ -209,19 +213,11 @@ export default function DeckView() {
             {addError && <p className="text-sm text-red-600">{addError}</p>}
 
             <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={addPair}
-                className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-              >
+              <button type="button" onClick={addPair} className="btn-secondary">
                 + Add another
               </button>
-              <button
-                type="submit"
-                disabled={adding || !canSubmit}
-                className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:opacity-40 text-white text-sm font-medium rounded-lg py-2 transition-colors"
-              >
-                {adding ? "Adding…" : `Add ${pairs.filter((p) => p.front.trim() && p.back.trim()).length || ""} card${pairs.filter((p) => p.front.trim() && p.back.trim()).length !== 1 ? "s" : ""}`}
+              <button type="submit" disabled={adding || !canSubmit} className="btn-primary flex-1">
+                {adding ? "Adding…" : `Add ${validCount || ""} card${validCount !== 1 ? "s" : ""}`}
               </button>
             </div>
           </form>
@@ -229,32 +225,34 @@ export default function DeckView() {
 
         {/* Card list */}
         <div>
-          <p className="text-sm text-gray-400 mb-3">
+          <p className="text-sm text-slate-400 font-medium mb-3">
             {cardList.length} card{cardList.length !== 1 ? "s" : ""}
           </p>
-          <ul className="space-y-2">
+          <ul className="flex flex-col gap-2">
             {cardList.map((card) => (
-              <li key={card.id} className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-start justify-between gap-3">
+              <li key={card.id} className="card px-4 py-3 flex items-start justify-between gap-3 hover:shadow-card-hover transition-shadow">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{card.front_text}</p>
-                  <p className="text-sm text-gray-500 truncate">{card.back_text}</p>
+                  <p className="text-sm font-semibold text-slate-800 truncate">{card.front_text}</p>
+                  <p className="text-sm text-slate-400 truncate mt-0.5">{card.back_text}</p>
                 </div>
                 <button
                   onClick={() => handleDeleteCard(card.id)}
-                  className="text-gray-300 hover:text-red-500 transition-colors text-sm shrink-0 mt-0.5"
+                  className="p-1 text-slate-300 hover:text-red-400 transition-colors rounded hover:bg-red-50 shrink-0"
                   aria-label="Delete card"
                 >
-                  ✕
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M1 1L11 11M11 1L1 11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                  </svg>
                 </button>
               </li>
             ))}
           </ul>
           {cardList.length === 0 && (
-            <p className="text-center text-gray-400 py-8">No cards yet.</p>
+            <div className="card p-10 text-center text-slate-400">No cards yet.</div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }
 
@@ -281,7 +279,7 @@ function VoiceField({ label, value, onChange, onVoice, listening, isSupported }:
             value={value}
             onChange={(e) => onChange(e.target.value)}
             required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="input pr-8"
           />
           {value && (
             <button
@@ -299,10 +297,10 @@ function VoiceField({ label, value, onChange, onVoice, listening, isSupported }:
             type="button"
             onClick={onVoice}
             title={listening ? "Stop recording" : "Speak"}
-            className={`px-3 rounded-lg border text-sm transition-colors ${
+            className={`px-3 rounded-xl border text-sm transition-colors ${
               listening
-                ? "bg-red-50 border-red-300 text-red-600 animate-pulse"
-                : "border-gray-300 text-gray-500 hover:bg-gray-50"
+                ? "bg-red-50 border-red-200 text-red-500 animate-pulse"
+                : "border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600"
             }`}
           >
             🎤
