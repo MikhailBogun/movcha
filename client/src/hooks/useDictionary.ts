@@ -14,6 +14,7 @@ export interface DictionaryResult {
   phrasal_verbs: string[];
   translations: string[];
   translation_source: string;
+  suggestions: string[];
 }
 
 export function useDictionary(word: string, debounceMs = 400) {

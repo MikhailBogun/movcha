@@ -13,9 +13,10 @@ interface Props {
   result: DictionaryResult | null;
   loading: boolean;
   onPickTranslation: (t: string) => void;
+  onPickSuggestion: (word: string) => void;
 }
 
-export default function DictionaryPanel({ result, loading, onPickTranslation }: Props) {
+export default function DictionaryPanel({ result, loading, onPickTranslation, onPickSuggestion }: Props) {
   if (loading) {
     return (
       <div className="mt-1 rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-400 animate-pulse">
@@ -25,6 +26,27 @@ export default function DictionaryPanel({ result, loading, onPickTranslation }: 
   }
 
   if (!result) return null;
+
+  // Misspelled — show suggestions only
+  if (result.definitions.length === 0 && result.suggestions.length > 0) {
+    return (
+      <div className="mt-1 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+        <p className="text-amber-700 font-medium mb-2">Did you mean…?</p>
+        <div className="flex flex-wrap gap-1.5">
+          {result.suggestions.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onPickSuggestion(s)}
+              className="px-3 py-1 rounded-lg bg-white border border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors font-medium"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-1 rounded-xl border border-gray-200 bg-white shadow-sm text-sm">

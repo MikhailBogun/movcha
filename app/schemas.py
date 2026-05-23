@@ -128,6 +128,7 @@ class DictionaryResultSchema(BaseModel):
     phrasal_verbs: list[str]
     translations: list[str]
     translation_source: str
+    suggestions: list[str]
 
 
 # --- Admin ---

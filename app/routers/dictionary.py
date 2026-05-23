@@ -27,4 +27,5 @@ def lookup(
         phrasal_verbs=result.phrasal_verbs,
         translations=result.translations,
         translation_source=result.translation_source,
+        suggestions=result.suggestions,
     )

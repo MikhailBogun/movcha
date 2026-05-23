@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import httpx
 
@@ -17,6 +17,7 @@ from app.services.translation.mymemory import MyMemoryProvider
 # ---------------------------------------------------------------------------
 
 _CEFR_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "cefr.json")
+
 
 def _build_cefr_index() -> Dict[str, str]:
     with open(_CEFR_PATH, encoding="utf-8") as f:
@@ -51,6 +52,7 @@ class DictionaryResult:
     phrasal_verbs: List[str] = field(default_factory=list)
     translations: List[str] = field(default_factory=list)
     translation_source: str = "none"
+    suggestions: List[str] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +72,7 @@ _providers = [
 ]
 
 
-def _fetch_translations(word: str) -> tuple[list[str], str]:
+def _fetch_translations(word: str) -> Tuple[List[str], str]:
     for provider in _providers:
         if not provider.is_configured():
             continue
@@ -80,7 +82,7 @@ def _fetch_translations(word: str) -> tuple[list[str], str]:
     return [], "none"
 
 
-def _fetch_definition(word: str) -> tuple[list[Definition], list[str], list[str]]:
+def _fetch_definition(word: str) -> Tuple[List[Definition], List[str], List[str]]:
     """Fetch from dictionaryapi.dev — returns (definitions, examples, phrasal_verbs)."""
     try:
         resp = httpx.get(
@@ -91,9 +93,9 @@ def _fetch_definition(word: str) -> tuple[list[Definition], list[str], list[str]
             return [], [], []
 
         data = resp.json()
-        definitions: list[Definition] = []
-        examples: list[str] = []
-        phrasal_verbs: list[str] = []
+        definitions: List[Definition] = []
+        examples: List[str] = []
+        phrasal_verbs: List[str] = []
 
         for entry in data:
             for meaning in entry.get("meanings", []):
@@ -108,7 +110,6 @@ def _fetch_definition(word: str) -> tuple[list[Definition], list[str], list[str]
                     if defn.get("example"):
                         examples.append(defn["example"])
 
-            # Phrasal verbs sometimes appear as separate entries with spaces
             entry_word = entry.get("word", "")
             if " " in entry_word and word.lower() in entry_word.lower():
                 phrasal_verbs.append(entry_word)
@@ -117,6 +118,26 @@ def _fetch_definition(word: str) -> tuple[list[Definition], list[str], list[str]
 
     except Exception:
         return [], [], []
+
+
+def _fetch_suggestions(word: str) -> List[str]:
+    """Ask Datamuse for similarly-spelled words when the word is not found."""
+    try:
+        resp = httpx.get(
+            "https://api.datamuse.com/words",
+            params={"sp": word, "max": 5},
+            timeout=5,
+        )
+        if resp.status_code != 200:
+            return []
+        data = resp.json()
+        return [
+            item["word"]
+            for item in data
+            if item["word"].lower() != word.lower()
+        ][:5]
+    except Exception:
+        return []
 
 
 # ---------------------------------------------------------------------------
@@ -131,7 +152,13 @@ def lookup(word: str) -> DictionaryResult:
         return _cache[word]
 
     definitions, examples, phrasal_verbs = _fetch_definition(word)
-    translations, source = _fetch_translations(word)
+
+    # No definitions → word might be misspelled, fetch suggestions
+    suggestions: List[str] = []
+    if not definitions:
+        suggestions = _fetch_suggestions(word)
+
+    translations, source = _fetch_translations(word) if definitions else ([], "none")
     cefr = _CEFR.get(word)
 
     result = DictionaryResult(
@@ -142,6 +169,7 @@ def lookup(word: str) -> DictionaryResult:
         phrasal_verbs=phrasal_verbs,
         translations=translations,
         translation_source=source,
+        suggestions=suggestions,
     )
 
     _cache[word] = result

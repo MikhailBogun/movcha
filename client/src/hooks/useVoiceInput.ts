@@ -1,15 +1,24 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Status = "idle" | "listening" | "error";
 
 interface UseVoiceInputOptions {
   onTranscript: (text: string) => void;
+  onInterim?: (text: string) => void;
   lang?: string;
 }
 
-export function useVoiceInput({ onTranscript, lang = "en-US" }: UseVoiceInputOptions) {
+export function useVoiceInput({ onTranscript, onInterim, lang = "en-US" }: UseVoiceInputOptions) {
   const [status, setStatus] = useState<Status>("idle");
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  // Always-current refs so recognition callbacks never capture stale closures
+  const onTranscriptRef = useRef(onTranscript);
+  const onInterimRef = useRef(onInterim);
+  useEffect(() => {
+    onTranscriptRef.current = onTranscript;
+    onInterimRef.current = onInterim;
+  });
 
   const isSupported =
     typeof window !== "undefined" &&
@@ -26,20 +35,33 @@ export function useVoiceInput({ onTranscript, lang = "en-US" }: UseVoiceInputOpt
 
     const recognition = new SpeechRecognitionImpl();
     recognition.lang = lang;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => setStatus("listening");
     recognition.onerror = () => setStatus("error");
     recognition.onend = () => setStatus("idle");
+
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = event.results[0]?.[0]?.transcript ?? "";
-      if (transcript) onTranscript(transcript);
+      let interim = "";
+      let final = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const text = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          final += text;
+        } else {
+          interim += text;
+        }
+      }
+
+      if (final) onTranscriptRef.current(final);
+      else if (interim) onInterimRef.current?.(interim);
     };
 
     recognitionRef.current = recognition;
     recognition.start();
-  }, [isSupported, lang, onTranscript]);
+  }, [isSupported, lang]);
 
   const stop = useCallback(() => {
     recognitionRef.current?.stop();
