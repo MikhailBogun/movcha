@@ -111,6 +111,25 @@ class SessionResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# --- Dictionary ---
+
+
+class DefinitionSchema(BaseModel):
+    part_of_speech: str
+    definition: str
+    example: str | None = None
+
+
+class DictionaryResultSchema(BaseModel):
+    word: str
+    cefr: str | None
+    definitions: list[DefinitionSchema]
+    examples: list[str]
+    phrasal_verbs: list[str]
+    translations: list[str]
+    translation_source: str
+
+
 # --- Admin ---
 
 

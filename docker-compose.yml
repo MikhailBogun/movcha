@@ -26,6 +26,8 @@ services:
     environment:
       - DATABASE_URL=mysql+pymysql://root:password@db/flashcards_db
       - SECRET_KEY=dev-secret-key-change-in-production
+      - DEEPL_API_KEY=${DEEPL_API_KEY:-}
+      - TRANSLATION_EMAIL=yesnoapp1@gmail.com
 
   client:
     build: ./client

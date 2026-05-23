@@ -8,7 +8,7 @@ from sqlmodel import SQLModel
 
 import app.models  # noqa: F401 — registers models before create_all
 from app.database import engine
-from app.routers import admin, auth, cards, decks, review, sessions
+from app.routers import admin, auth, cards, decks, dictionary, review, sessions
 
 
 @asynccontextmanager
@@ -33,6 +33,7 @@ app.include_router(cards.router)
 app.include_router(review.router)
 app.include_router(sessions.router)
 app.include_router(admin.router)
+app.include_router(dictionary.router)
 
 
 @app.get("/")

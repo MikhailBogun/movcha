@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { cards as cardsApi, decks as decksApi } from "../api/client";
 import { ApiError } from "../api/client";
 import type { Deck, Flashcard } from "../api/types";
+import DictionaryPanel from "../components/DictionaryPanel";
+import { useDictionary } from "../hooks/useDictionary";
 import { useVoiceInput } from "../hooks/useVoiceInput";
 
 export default function DeckView() {
@@ -32,6 +34,8 @@ export default function DeckView() {
         setActiveVoiceField(null);
       },
     });
+
+  const { result: dictResult, loading: dictLoading } = useDictionary(front);
 
   useEffect(() => {
     Promise.all([decksApi.get(deckId), cardsApi.list(deckId)])
@@ -108,14 +112,21 @@ export default function DeckView() {
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
           <h2 className="font-semibold text-gray-800 mb-4">Add card</h2>
           <form onSubmit={handleAddCard} className="space-y-3">
-            <VoiceField
-              label="Front"
-              value={front}
-              onChange={setFront}
-              onVoice={() => handleVoice("front")}
-              listening={voiceStatus === "listening" && activeVoiceField === "front"}
-              isSupported={isSupported}
-            />
+            <div>
+              <VoiceField
+                label="Front"
+                value={front}
+                onChange={setFront}
+                onVoice={() => handleVoice("front")}
+                listening={voiceStatus === "listening" && activeVoiceField === "front"}
+                isSupported={isSupported}
+              />
+              <DictionaryPanel
+                result={dictResult}
+                loading={dictLoading}
+                onPickTranslation={(t) => setBack(t)}
+              />
+            </div>
             <VoiceField
               label="Back"
               value={back}
